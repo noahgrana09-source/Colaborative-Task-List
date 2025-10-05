@@ -4,6 +4,8 @@ import 'package:flutter_platform_widgets/flutter_platform_widgets.dart';
 import 'package:flutter_signin_button/flutter_signin_button.dart';
 import '../core/colors.dart';
 import '../core/styles.dart';
+import '../components/theme_toggle.dart';
+import 'register.dart';
 
 class Login extends StatefulWidget {
   final bool isDarkMode;
@@ -23,6 +25,19 @@ class _LoginState extends State<Login> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   bool _isPasswordVisible = false;
+
+  void _navigateToRegister() {
+    Navigator.push(
+      context,
+      platformPageRoute(
+        context: context,
+        builder: (context) => Register(
+          isDarkMode: widget.isDarkMode,
+          onThemeToggle: widget.onThemeToggle,
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -44,22 +59,9 @@ class _LoginState extends State<Login> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
-                      Icon(
-                        Icons.wb_sunny_outlined,
-                        color: AppColors.getSubtitleColor(widget.isDarkMode),
-                        size: 20,
-                      ),
-                      const SizedBox(width: 8),
-                      PlatformSwitch(
-                        value: widget.isDarkMode,
-                        onChanged: (_) => widget.onThemeToggle(),
-                        activeColor: AppColors.green,
-                      ),
-                      const SizedBox(width: 8),
-                      Icon(
-                        Icons.nights_stay_outlined,
-                        color: AppColors.getSubtitleColor(widget.isDarkMode),
-                        size: 20,
+                      ThemeToggle(
+                        isDarkMode: widget.isDarkMode,
+                        onToggle: widget.onThemeToggle,
                       ),
                     ],
                   ),
@@ -90,7 +92,7 @@ class _LoginState extends State<Login> {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        'Organiza tu trabajo de manera eficiente',
+                        'Organizá tus tareas con tu equipo',
                         style: AppStyles.getSubtitle(widget.isDarkMode),
                         textAlign: TextAlign.center,
                       ),
@@ -144,7 +146,7 @@ class _LoginState extends State<Login> {
                                     ),
                                   ),
                                 ),
-                                cupertino: (_, __) => CupertinoTextFieldData(
+                                cupertino: (_, _) => CupertinoTextFieldData(
                                   style: AppStyles.getInputText(widget.isDarkMode),
                                   decoration: const BoxDecoration(
                                     color: Colors.transparent,
@@ -335,10 +337,7 @@ class _LoginState extends State<Login> {
                         ),
                       ),
                       GestureDetector(
-                        onTap: () {
-                          // Navegar a registro
-                          print('Register pressed');
-                        },
+                        onTap: _navigateToRegister,
                         child: const Text(
                           ' Regístrate',
                           style: TextStyle(
