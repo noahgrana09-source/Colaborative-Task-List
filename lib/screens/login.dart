@@ -5,7 +5,9 @@ import 'package:flutter_signin_button/flutter_signin_button.dart';
 import '../core/colors.dart';
 import '../core/styles.dart';
 import '../components/theme_toggle.dart';
+import '../services/auth_service.dart';
 import 'register.dart';
+import 'home.dart';
 
 class Login extends StatefulWidget {
   final bool isDarkMode;
@@ -24,7 +26,124 @@ class Login extends StatefulWidget {
 class _LoginState extends State<Login> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+  final AuthService _authService = AuthService();
+  
   bool _isPasswordVisible = false;
+  bool _isLoading = false;
+
+  /// Maneja el inicio de sesión con email y contraseña
+  Future<void> _handleEmailSignIn() async {
+    // Validar que los campos no estén vacíos
+    if (_emailController.text.trim().isEmpty || _passwordController.text.isEmpty) {
+      _showErrorDialog('Por favor completa todos los campos');
+      return;
+    }
+
+    // Mostrar indicador de carga
+    setState(() => _isLoading = true);
+
+    try {
+      // Intentar iniciar sesión
+      final user = await _authService.signInWithEmailAndPassword(
+        email: _emailController.text.trim(),
+        password: _passwordController.text,
+      );
+
+      // Ocultar indicador de carga
+      setState(() => _isLoading = false);
+
+      if (user != null) {
+        // Inicio de sesión exitoso
+        print('Usuario autenticado: ${user.email}');
+        _showSuccessDialog('¡Bienvenido de nuevo!');
+        if (mounted){
+          Navigator.of(context).pushAndRemoveUntil(
+            platformPageRoute(
+              context: context,
+              builder: (context) => Home(
+                isDarkMode: widget.isDarkMode,
+                onThemeToggle: widget.onThemeToggle,
+              ),
+            ),
+            (route) => false,
+          );
+        }
+      } else {
+        // Error en el inicio de sesión
+        _showErrorDialog('Email o contraseña incorrectos');
+      }
+    } catch (e) {
+      setState(() => _isLoading = false);
+      _showErrorDialog('Error inesperado: $e');
+    }
+  }
+
+  /// Maneja el inicio de sesión con Google
+  Future<void> _handleGoogleSignIn() async {
+    setState(() => _isLoading = true);
+
+    try {
+      final user = await _authService.signInWithGoogle();
+      
+      setState(() => _isLoading = false);
+
+      if (user != null) {
+        print('Usuario autenticado con Google: ${user.email}');
+        _showSuccessDialog('¡Bienvenido ${user.displayName}!');
+        if (mounted){
+          Navigator.of(context).pushAndRemoveUntil(
+            platformPageRoute(
+              context: context,
+              builder: (context) => Home(
+                isDarkMode: widget.isDarkMode,
+                onThemeToggle: widget.onThemeToggle,
+              ),
+            ),
+            (route) => false,
+          );
+        }
+      } else {
+        _showErrorDialog('Inicio de sesión con Google cancelado');
+      }
+    } catch (e) {
+      setState(() => _isLoading = false);
+      _showErrorDialog('Error al iniciar sesión con Google: $e');
+    }
+  }
+
+  /// Muestra un diálogo de error
+  void _showErrorDialog(String message) {
+    showPlatformDialog(
+      context: context,
+      builder: (_) => PlatformAlertDialog(
+        title: const Text('Error'),
+        content: Text(message),
+        actions: [
+          PlatformDialogAction(
+            child: const Text('OK'),
+            onPressed: () => Navigator.pop(context),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Muestra un diálogo de éxito
+  void _showSuccessDialog(String message) {
+    showPlatformDialog(
+      context: context,
+      builder: (_) => PlatformAlertDialog(
+        title: const Text('Éxito'),
+        content: Text(message),
+        actions: [
+          PlatformDialogAction(
+            child: const Text('OK'),
+            onPressed: () => Navigator.pop(context),
+          ),
+        ],
+      ),
+    );
+  }
 
   void _navigateToRegister() {
     Navigator.push(
@@ -135,6 +254,7 @@ class _LoginState extends State<Login> {
                               child: PlatformTextField(
                                 controller: _emailController,
                                 hintText: 'tu@email.com',
+                                keyboardType: TextInputType.emailAddress,
                                 material: (_, _) => MaterialTextFieldData(
                                   style: AppStyles.getInputText(widget.isDarkMode),
                                   decoration: InputDecoration(
@@ -248,30 +368,31 @@ class _LoginState extends State<Login> {
                         // Login Button
                         SizedBox(
                           height: 50,
-                          child: PlatformElevatedButton(
-                            onPressed: () {
-                              // Implementar lógica de login
-                              print('Login pressed');
-                            },
-                            child: Text(
-                              'Iniciar Sesión',
-                              style: AppStyles.getButtonText(widget.isDarkMode),
-                            ),
-                            material: (_, _) => MaterialElevatedButtonData(
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: AppColors.green,
-                                foregroundColor: AppColors.white,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: AppStyles.borderRadius8,
+                          child: _isLoading
+                              ? Center(
+                                  child: PlatformCircularProgressIndicator(),
+                                )
+                              : PlatformElevatedButton(
+                                  onPressed: _handleEmailSignIn,
+                                  child: Text(
+                                    'Iniciar Sesión',
+                                    style: AppStyles.getButtonText(widget.isDarkMode),
+                                  ),
+                                  material: (_, _) => MaterialElevatedButtonData(
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: AppColors.green,
+                                      foregroundColor: AppColors.white,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: AppStyles.borderRadius8,
+                                      ),
+                                      elevation: 2,
+                                    ),
+                                  ),
+                                  cupertino: (_, _) => CupertinoElevatedButtonData(
+                                    borderRadius: AppStyles.borderRadius8,
+                                    color: AppColors.green,
+                                  ),
                                 ),
-                                elevation: 2,
-                              ),
-                            ),
-                            cupertino: (_, _) => CupertinoElevatedButtonData(
-                              borderRadius: AppStyles.borderRadius8,
-                              color: AppColors.green,
-                            ),
-                          ),
                         ),
                         
                         const SizedBox(height: 24),
@@ -310,10 +431,7 @@ class _LoginState extends State<Login> {
                           child: SignInButton(
                             Buttons.Google,
                             text: "Continuar con Google",
-                            onPressed: () {
-                              // Implementar Google Sign In
-                              print('Google Sign In pressed');
-                            },
+                            onPressed: _isLoading ? null : _handleGoogleSignIn,
                             shape: RoundedRectangleBorder(
                               borderRadius: AppStyles.borderRadius8,
                             ),

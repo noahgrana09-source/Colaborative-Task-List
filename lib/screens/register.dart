@@ -5,6 +5,8 @@ import 'package:flutter_signin_button/flutter_signin_button.dart';
 import '../core/colors.dart';
 import '../core/styles.dart';
 import '../components/theme_toggle.dart';
+import '../services/auth_service.dart';
+import 'home.dart';
 
 class Register extends StatefulWidget {
   final bool isDarkMode;
@@ -24,8 +26,157 @@ class _RegisterState extends State<Register> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _confirmPasswordController = TextEditingController();
+  final AuthService _authService = AuthService();
+  
   bool _isPasswordVisible = false;
   bool _isConfirmPasswordVisible = false;
+  bool _isLoading = false;
+
+  /// Maneja el registro con email y contraseña
+  Future<void> _handleEmailRegister() async {
+    // Validar que los campos no estén vacíos
+    if (_emailController.text.trim().isEmpty || 
+        _passwordController.text.isEmpty || 
+        _confirmPasswordController.text.isEmpty) {
+      _showErrorDialog('Por favor completa todos los campos');
+      return;
+    }
+
+    // Validar que las contraseñas coincidan
+    if (_passwordController.text != _confirmPasswordController.text) {
+      _showErrorDialog('Las contraseñas no coinciden');
+      return;
+    }
+
+    // Validar longitud mínima de contraseña
+    if (_passwordController.text.length < 6) {
+      _showErrorDialog('La contraseña debe tener al menos 6 caracteres');
+      return;
+    }
+
+    // Mostrar indicador de carga
+    setState(() => _isLoading = true);
+
+    try {
+      // Intentar registrar al usuario
+      final user = await _authService.registerWithEmailAndPassword(
+        email: _emailController.text.trim(),
+        password: _passwordController.text,
+      );
+
+      // Ocultar indicador de carga
+      setState(() => _isLoading = false);
+
+      if (user != null) {
+        // Registro exitoso
+        print('Usuario registrado: ${user.email}');
+        
+        // Opcional: Enviar email de verificación
+        await _authService.sendEmailVerification();
+        
+        _showSuccessDialog(
+          '¡Cuenta creada exitosamente!\n\nHemos enviado un email de verificación a tu correo.',
+          onConfirm: () {
+            // Volver a la pantalla de login
+            Navigator.pop(context); // Cerrar diálogo
+            if (mounted) {
+              Navigator.of(context).pushAndRemoveUntil(
+                platformPageRoute(
+                  context: context,
+                  builder: (context) => Home(
+                    isDarkMode: widget.isDarkMode,
+                    onThemeToggle: widget.onThemeToggle,
+                  ),
+                ),
+                (route) => false,
+              );
+            } // Volver a login
+          },
+        );
+      } else {
+        // Error en el registro
+        _showErrorDialog('No se pudo crear la cuenta. Verifica tus datos.');
+      }
+    } catch (e) {
+      setState(() => _isLoading = false);
+      _showErrorDialog('Error inesperado: $e');
+    }
+  }
+
+  /// Maneja el registro con Google
+  Future<void> _handleGoogleRegister() async {
+    setState(() => _isLoading = true);
+
+    try {
+      final user = await _authService.signInWithGoogle();
+      
+      setState(() => _isLoading = false);
+
+      if (user != null) {
+        print('Usuario registrado con Google: ${user.email}');
+        _showSuccessDialog(
+          '¡Bienvenido ${user.displayName}!',
+          onConfirm: () {
+            Navigator.pop(context); // Cerrar diálogo
+            if (mounted){
+              Navigator.of(context).pushAndRemoveUntil(
+                platformPageRoute(
+                  context: context,
+                  builder: (context) => Home(
+                    isDarkMode: widget.isDarkMode,
+                    onThemeToggle: widget.onThemeToggle,
+                  ),
+                ),
+                (route) => false,
+            );
+        } // Volver a login
+          },
+        );
+      } else {
+        _showErrorDialog('Registro con Google cancelado');
+      }
+    } catch (e) {
+      setState(() => _isLoading = false);
+      _showErrorDialog('Error al registrarse con Google: $e');
+    }
+  }
+
+  /// Muestra un diálogo de error
+  void _showErrorDialog(String message) {
+    showPlatformDialog(
+      context: context,
+      builder: (_) => PlatformAlertDialog(
+        title: const Text('Error'),
+        content: Text(message),
+        actions: [
+          PlatformDialogAction(
+            child: const Text('OK'),
+            onPressed: () => Navigator.pop(context),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Muestra un diálogo de éxito
+  void _showSuccessDialog(String message, {VoidCallback? onConfirm}) {
+    showPlatformDialog(
+      context: context,
+      builder: (_) => PlatformAlertDialog(
+        title: const Text('Éxito'),
+        content: Text(message),
+        actions: [
+          PlatformDialogAction(
+            child: const Text('OK'),
+            onPressed: () {
+              Navigator.pop(context);
+              onConfirm?.call();
+            },
+          ),
+        ],
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -166,30 +317,31 @@ class _RegisterState extends State<Register> {
                         // Register Button
                         SizedBox(
                           height: 50,
-                          child: PlatformElevatedButton(
-                            onPressed: () {
-                              // Implementar lógica de registro
-                              print('Register pressed');
-                            },
-                            child: Text(
-                              'Crear Cuenta',
-                              style: AppStyles.getButtonText(widget.isDarkMode),
-                            ),
-                            material: (_, _) => MaterialElevatedButtonData(
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: AppColors.green,
-                                foregroundColor: AppColors.white,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: AppStyles.borderRadius8,
+                          child: _isLoading
+                              ? Center(
+                                  child: PlatformCircularProgressIndicator(),
+                                )
+                              : PlatformElevatedButton(
+                                  onPressed: _handleEmailRegister,
+                                  child: Text(
+                                    'Crear Cuenta',
+                                    style: AppStyles.getButtonText(widget.isDarkMode),
+                                  ),
+                                  material: (_, _) => MaterialElevatedButtonData(
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: AppColors.green,
+                                      foregroundColor: AppColors.white,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: AppStyles.borderRadius8,
+                                      ),
+                                      elevation: 2,
+                                    ),
+                                  ),
+                                  cupertino: (_, _) => CupertinoElevatedButtonData(
+                                    borderRadius: AppStyles.borderRadius8,
+                                    color: AppColors.green,
+                                  ),
                                 ),
-                                elevation: 2,
-                              ),
-                            ),
-                            cupertino: (_, _) => CupertinoElevatedButtonData(
-                              borderRadius: AppStyles.borderRadius8,
-                              color: AppColors.green,
-                            ),
-                          ),
                         ),
                         
                         const SizedBox(height: 24),
@@ -228,10 +380,7 @@ class _RegisterState extends State<Register> {
                           child: SignInButton(
                             Buttons.Google,
                             text: "Registrate con Google",
-                            onPressed: () {
-                              // Implementar Google Sign Up
-                              print('Google Sign Up pressed');
-                            },
+                            onPressed: _isLoading ? null : _handleGoogleRegister,
                             shape: RoundedRectangleBorder(
                               borderRadius: AppStyles.borderRadius8,
                             ),
@@ -305,6 +454,7 @@ class _RegisterState extends State<Register> {
           child: PlatformTextField(
             controller: controller,
             hintText: hintText,
+            keyboardType: TextInputType.emailAddress,
             material: (_, _) => MaterialTextFieldData(
               style: AppStyles.getInputText(isDarkMode),
               decoration: InputDecoration(
@@ -316,7 +466,7 @@ class _RegisterState extends State<Register> {
                 ),
               ),
             ),
-            cupertino: (_, _) => CupertinoTextFieldData(
+            cupertino: (_, __) => CupertinoTextFieldData(
               style: AppStyles.getInputText(isDarkMode),
               decoration: const BoxDecoration(
                 color: Colors.transparent,

@@ -64,6 +64,8 @@ class DefaultFirebaseOptions {
     messagingSenderId: '196069546209',
     projectId: 'tasklink-fca92',
     storageBucket: 'tasklink-fca92.firebasestorage.app',
+    androidClientId: '196069546209-olvp07l6vglir9u02l0vj7l22annp2l4.apps.googleusercontent.com',
+    iosClientId: '196069546209-qfe18gva3uam9a45i4v8r99vftt0r1ei.apps.googleusercontent.com',
     iosBundleId: 'com.example.colaborativeTaskLists',
   );
 
@@ -73,6 +75,8 @@ class DefaultFirebaseOptions {
     messagingSenderId: '196069546209',
     projectId: 'tasklink-fca92',
     storageBucket: 'tasklink-fca92.firebasestorage.app',
+    androidClientId: '196069546209-olvp07l6vglir9u02l0vj7l22annp2l4.apps.googleusercontent.com',
+    iosClientId: '196069546209-qfe18gva3uam9a45i4v8r99vftt0r1ei.apps.googleusercontent.com',
     iosBundleId: 'com.example.colaborativeTaskLists',
   );
 
@@ -85,4 +89,5 @@ class DefaultFirebaseOptions {
     storageBucket: 'tasklink-fca92.firebasestorage.app',
     measurementId: 'G-B8YZ23QVJN',
   );
+
 }

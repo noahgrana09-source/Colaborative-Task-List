@@ -12,7 +12,20 @@
           "package_name": "com.example.colaborative_task_lists"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "196069546209-olvp07l6vglir9u02l0vj7l22annp2l4.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.colaborative_task_lists",
+            "certificate_hash": "4411f85900316330ca5ebce1c26bab0d6426b534"
+          }
+        },
+        {
+          "client_id": "196069546209-2pdtitaku1bhurfinb41n2cjstdar4r4.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyAOZpxPlF74w767HZPeFC1vZ3aLTyw46Rg"
@@ -20,7 +33,19 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "196069546209-2pdtitaku1bhurfinb41n2cjstdar4r4.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "196069546209-qfe18gva3uam9a45i4v8r99vftt0r1ei.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.colaborativeTaskLists"
+              }
+            }
+          ]
         }
       }
     }
